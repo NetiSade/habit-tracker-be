@@ -206,10 +206,6 @@ app.put(
       const { habitId, userId } = req.params;
       const { name, completed } = req.body;
 
-      console.log("😎🔥 ~ file: server.ts:209 ~ name:", name);
-
-      console.log("😎🔥 ~ file: server.ts:209 ~ completed:", completed);
-
       // Check if the habit exists and belongs to the user
       const habit = await Habit.findOne({ _id: habitId, user: userId });
       if (!habit) {
