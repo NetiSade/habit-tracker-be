@@ -1,18 +1,20 @@
-import { Types } from "mongoose";
-
-type HabitInput = {
-  _id: Types.ObjectId | string;
-  name: string;
-  completed: boolean;
-  user: Types.ObjectId | string;
-  // Add any other fields your Habit model has
+export const getClientDate = (dateString: string) => {
+  const clientDate = new Date(dateString);
+  if (isNaN(clientDate.getTime())) {
+    return null;
+  }
+  return clientDate;
 };
 
-export const transformHabit = (habit: HabitInput) => {
-  return {
-    id: habit._id.toString(),
-    name: habit.name,
-    completed: habit.completed,
-    // Include any other fields you want in your API response
-  };
+export const getClientDateString = (dateString: string) => {
+  const clientDate = getClientDate(dateString);
+  if (!clientDate) {
+    return null;
+  }
+
+  return clientDate.toISOString().split("T")[0];
+};
+
+export const compareDates = (date1: string, date2: string) => {
+  return getClientDateString(date1) === getClientDateString(date2);
 };

@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 const habitSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    completed: { type: Boolean, default: false },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    completedDates: [{ type: Date }],
   },
   { timestamps: true }
 );

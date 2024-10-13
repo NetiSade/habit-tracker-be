@@ -3,12 +3,12 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
+import bcrypt, { compare } from "bcrypt";
 
 import { Habit } from "./habitSchema";
 import { User } from "./userSchema";
 import { authMiddleware } from "./authMiddleware";
-import { transformHabit } from "./utils";
+import { compareDates, getClientDate, getClientDateString } from "./utils";
 
 dotenv.config();
 
@@ -137,9 +137,32 @@ app.get(
       }
 
       const habits = await Habit.find({ user: userId }).lean();
-      const transformedHabits = habits.map(transformHabit);
 
-      res.json({ habits: transformedHabits });
+      const dateQuery = req.query.date as string;
+      const clientDate = getClientDate(dateQuery);
+
+      // Validate date
+      if (!clientDate) {
+        return res.status(400).json({ message: "Invalid date provided" });
+      }
+
+      const habitsWithStatus = habits.map((habit) => ({
+        id: habit._id,
+        name: habit.name,
+        isCompleted: habit.completedDates.some((date) =>
+          compareDates(date.toISOString(), dateQuery)
+        ),
+      }));
+
+      // Sort habits by status and name
+      habitsWithStatus.sort((a, b) => {
+        if (a.isCompleted === b.isCompleted) {
+          return a.name.localeCompare(b.name);
+        }
+        return a.isCompleted ? 1 : -1;
+      });
+
+      res.json({ habits: habitsWithStatus });
     } catch (error) {
       console.error("Error fetching habits:", error);
       res.status(500).json({
@@ -186,9 +209,10 @@ app.post("/habits", authMiddleware, async (req: Request, res: Response) => {
     });
 
     const savedHabit = await newHabit.save();
-    const transformedHabit = transformHabit(savedHabit);
 
-    res.status(201).json(transformedHabit);
+    res.status(201).json({
+      id: savedHabit._id,
+    });
   } catch (error) {
     console.error("Error creating habit:", error);
     res.status(400).json({
@@ -198,13 +222,13 @@ app.post("/habits", authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
-app.put(
-  "/habits/:userId/:habitId",
+app.post(
+  "/habits/:userId/:habitId/toggle",
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
       const { habitId, userId } = req.params;
-      const { name, completed } = req.body;
+      const { date, isDone } = req.body;
 
       // Check if the habit exists and belongs to the user
       const habit = await Habit.findOne({ _id: habitId, user: userId });
@@ -214,13 +238,27 @@ app.put(
           .json({ message: "Habit not found or doesn't belong to this user" });
       }
 
-      habit.name = name || habit.name;
-      habit.completed = completed !== undefined ? completed : habit.completed;
+      const dateQuery = date as string;
+      const clientDate = getClientDate(dateQuery);
+
+      // Validate date
+      if (!clientDate) {
+        return res.status(400).json({ message: "Invalid date provided" });
+      }
+
+      if (isDone) {
+        habit.completedDates.push(date);
+      } else {
+        habit.completedDates = habit.completedDates.filter(
+          (date) => !compareDates(date.toISOString(), dateQuery)
+        );
+      }
 
       const updatedHabit = await habit.save();
-      const transformedHabit = transformHabit(updatedHabit);
 
-      res.json(transformedHabit);
+      res.json({
+        id: updatedHabit._id,
+      });
     } catch (error) {
       console.error("Error updating habit:", error);
       res.status(400).json({
@@ -241,12 +279,11 @@ app.delete(
       if (!deletedHabit) {
         return res.status(404).json({ message: "Habit not found" });
       }
-      // Transform
-      const transformedHabit = transformHabit(deletedHabit);
+
       // Respond
       res.json({
         message: "Habit deleted successfully",
-        habit: transformedHabit,
+        habitId: deletedHabit._id,
       });
     } catch (error) {
       res.status(400).json({ message: "Error deleting habit", error });
