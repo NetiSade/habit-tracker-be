@@ -83,13 +83,8 @@ app.get(
         ),
       }));
 
-      // Sort habits by status and name
-      habitsWithStatus.sort((a, b) => {
-        if (a.isCompleted === b.isCompleted) {
-          return a.name.localeCompare(b.name);
-        }
-        return a.isCompleted ? 1 : -1;
-      });
+      // Sort habits by status
+      habitsWithStatus.sort((a, b) => (a.isCompleted ? 1 : -1));
 
       res.json({ habits: habitsWithStatus });
     } catch (error) {
