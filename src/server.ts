@@ -1,16 +1,17 @@
 import express, { Express, Request, Response } from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import cors from "cors";
-import jwt from "jsonwebtoken";
-import bcrypt, { compare } from "bcrypt";
 
 import { Habit } from "./habitSchema";
 import { User } from "./userSchema";
 import { authMiddleware } from "./authMiddleware";
-import { compareDates, getClientDate, getClientDateString } from "./utils";
-
-dotenv.config();
+import { compareDates, getClientDate } from "./utils";
+import { config } from "./config";
+// Routes
+import signupRouter from "./routes/auth/signup";
+import loginRouter from "./routes/auth/login";
+import refreshTokenRouter from "./routes/auth/refreshToken";
+import verifyTokenRouter from "./routes/auth/verifyToken";
 
 const app: Express = express();
 const PORT: number = parseInt(process.env.PORT || "3000", 10);
@@ -24,22 +25,13 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-const mongoUri = process.env.MONGODB_URI;
-
-if (!mongoUri) {
+if (!config.mongoUri) {
   console.error("MONGODB_URI is not defined in the environment variables.");
   process.exit(1);
 }
 
-const jwtSecret = process.env.JWT_SECRET;
-
-if (!jwtSecret) {
-  console.error("JWT_SECRET is not defined in the environment variables.");
-  process.exit(1);
-}
-
 mongoose
-  .connect(mongoUri)
+  .connect(config.mongoUri)
   .then(() => console.log("Connected successfully to MongoDB Atlas"))
   .catch((error) => {
     console.error("Could not connect to MongoDB Atlas", error);
@@ -47,79 +39,16 @@ mongoose
   });
 
 // Routes
+
+// Auth routes
+app.use("/", signupRouter);
+app.use("/", loginRouter);
+app.use("/", refreshTokenRouter);
+app.use("/", verifyTokenRouter);
+// Habit routes
 app.get("/", (req: Request, res: Response) => {
   console.log("GET / route hit");
   res.send("Hello from the habit tracker server!");
-});
-
-app.post("/signup", async (req, res) => {
-  try {
-    const { username, email, password } = req.body;
-
-    // Basic validation
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
-
-    // Create new user
-    const user = new User({ username, email, password });
-    await user.save();
-
-    // Generate JWT
-    const token = jwt.sign({ userId: user._id }, jwtSecret, {
-      expiresIn: "1d",
-    });
-
-    res.status(201).json({
-      message: "User created successfully",
-      token,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
-    });
-  } catch (error) {
-    console.error("Signup error:", error);
-    res.status(500).json({
-      message: "Error signing up",
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
-
-app.post("/login", async (req: Request, res: Response) => {
-  try {
-    const { username, password } = req.body;
-
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(401).json({ message: "Authentication failed" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Authentication failed" });
-    }
-
-    const token = jwt.sign({ userId: user._id }, jwtSecret, {
-      expiresIn: "1h",
-    });
-
-    res.json({ token, userId: user._id });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({
-      message: "Login failed",
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
 });
 
 app.get(
