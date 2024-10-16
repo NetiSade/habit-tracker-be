@@ -146,6 +146,39 @@ app.post("/habits", authMiddleware, async (req: Request, res: Response) => {
   }
 });
 
+app.put(
+  "/habits/:userId/:habitId",
+  authMiddleware,
+  async (req: Request, res: Response) => {
+    try {
+      const { habitId, userId } = req.params;
+      const { name } = req.body;
+
+      // Check if the habit exists and belongs to the user
+      const habit = await Habit.findOne({ _id: habitId, user: userId });
+      if (!habit) {
+        return res
+          .status(404)
+          .json({ message: "Habit not found or doesn't belong to this user" });
+      }
+
+      habit.name = name;
+      const updatedHabit = await habit.save();
+
+      res.json({
+        id: updatedHabit._id,
+        name: updatedHabit.name,
+      });
+    } catch (error) {
+      console.error("Error updating habit:", error);
+      res.status(400).json({
+        message: "Error updating habit",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+);
+
 app.post(
   "/habits/:userId/:habitId/toggle",
   authMiddleware,
