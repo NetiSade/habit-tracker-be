@@ -150,32 +150,44 @@ app.post("/habits", authMiddleware, async (req: Request, res: Response) => {
 });
 
 app.put(
-  "/habits/:userId/:habitId",
+  "/habits/:userId",
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      const { habitId, userId } = req.params;
-      const { name } = req.body;
+      const { userId } = req.params;
+      const { habits } = req.body;
 
-      // Check if the habit exists and belongs to the user
-      const habit = await Habit.findOne({ _id: habitId, user: userId });
-      if (!habit) {
-        return res
-          .status(404)
-          .json({ message: "Habit not found or doesn't belong to this user" });
-      }
+      // Create a bulk operation
+      const bulkOps = habits.map(
+        (habit: {
+          id: string;
+          priority: number | null;
+          name: string | null;
+        }) => ({
+          updateOne: {
+            filter: { _id: habit.id, user: userId },
+            update: {
+              $set: {
+                ...(habit.priority !== null && { priority: habit.priority }),
+                ...(habit.name !== null && { name: habit.name }),
+              },
+            },
+          },
+        })
+      );
 
-      habit.name = name;
-      const updatedHabit = await habit.save();
+      // Execute the bulk operation
+      const result = await Habit.bulkWrite(bulkOps);
 
       res.json({
-        id: updatedHabit._id,
-        name: updatedHabit.name,
+        message: "Habits updated successfully",
+        matchedCount: result.matchedCount,
+        modifiedCount: result.modifiedCount,
       });
     } catch (error) {
-      console.error("Error updating habit:", error);
+      console.error("Error updating habits:", error);
       res.status(400).json({
-        message: "Error updating habit",
+        message: "Error updating habits",
         error: error instanceof Error ? error.message : String(error),
       });
     }
