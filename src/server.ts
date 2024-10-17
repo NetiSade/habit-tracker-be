@@ -81,10 +81,11 @@ app.get(
         isCompleted: habit.completedDates.some((date) =>
           compareDates(date.toISOString(), dateQuery)
         ),
+        priority: habit.priority,
       }));
 
-      // Sort habits by status
-      habitsWithStatus.sort((a, b) => (a.isCompleted ? 1 : -1));
+      // Sort habits by priority
+      habitsWithStatus.sort((a, b) => a.priority - b.priority);
 
       res.json({ habits: habitsWithStatus });
     } catch (error) {
@@ -126,9 +127,11 @@ app.post("/habits", authMiddleware, async (req: Request, res: Response) => {
         .json({ message: "This habit already exists for this user" });
     }
 
+    const habitsCount = await Habit.countDocuments({ user: userId });
+
     const newHabit = new Habit({
       name: name.trim(),
-      completed: false,
+      priority: habitsCount + 1,
       user: userId,
     });
 
@@ -236,6 +239,12 @@ app.delete(
       if (!deletedHabit) {
         return res.status(404).json({ message: "Habit not found" });
       }
+
+      // Update priorities - lower the priority of all habits with a higher priority from the deleted habit
+      await Habit.updateMany(
+        { priority: { $gt: deletedHabit.priority } },
+        { $inc: { priority: -1 } }
+      );
 
       // Respond
       res.json({
