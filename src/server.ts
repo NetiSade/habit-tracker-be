@@ -7,6 +7,8 @@ import { User } from "./userSchema";
 import { authMiddleware } from "./authMiddleware";
 import { compareDates, getClientDate } from "./utils";
 import { config } from "./config";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 // Routes
 import signupRouter from "./routes/auth/signup";
 import loginRouter from "./routes/auth/login";
@@ -16,14 +18,43 @@ import verifyTokenRouter from "./routes/auth/verifyToken";
 const app: Express = express();
 const PORT: number = parseInt(process.env.PORT || "3000", 10);
 
-const corsOptions = {
-  //origin: ["http://localhost:19006", "exp://192.117.152.202/32"], // Add your Expo client URL
-  optionsSuccessStatus: 200,
-  origin: "*", // Allow all origins for development
-};
+// Middleware
+app.use(helmet()); // Adds various HTTP headers for security
+app.use(express.json({ limit: "10kb" })); // Body parser, limiting request size
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+});
+app.use(limiter);
+
+// CORS configuration
+const corsOptions = {
+  origin: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",")
+    : [],
+  optionsSuccessStatus: 200,
+};
 app.use(cors(corsOptions));
-app.use(express.json());
+
+// Error handling middleware
+app.use(
+  (
+    err: any,
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) => {
+    console.error(err.stack);
+    res.status(500).send("Something broke!");
+  }
+);
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
 
 if (!config.mongoUri) {
   console.error("MONGODB_URI is not defined in the environment variables.");
