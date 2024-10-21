@@ -16,7 +16,6 @@ import refreshTokenRouter from "./routes/auth/refreshToken";
 import verifyTokenRouter from "./routes/auth/verifyToken";
 
 const app: Express = express();
-const PORT: number = parseInt(process.env.PORT || "3000", 10);
 
 // Middleware
 app.use(helmet()); // Adds various HTTP headers for security
