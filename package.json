@@ -2,7 +2,7 @@
   "name": "habit-tracker-backend",
   "version": "1.0.0",
   "description": "backend of habit-tracker-app",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
