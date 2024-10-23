@@ -101,17 +101,24 @@ app.get(
         return res.status(400).json({ message: "Invalid date provided" });
       }
 
-      const habitsWithStatus = habits.map((habit) => ({
-        id: habit._id,
-        name: habit.name,
-        isCompleted: habit.completedDates.some((date) =>
-          compareDates(date.toISOString(), dateQuery)
-        ),
-        priority: habit.priority,
-      }));
+      const habitsWithStatus = habits
+        .map((habit) => ({
+          id: habit._id,
+          name: habit.name,
+          isCompleted: habit.completedDates.some((date) =>
+            compareDates(date.toISOString(), dateQuery)
+          ),
+          priority: habit.priority,
+        }))
+        .sort((a, b) => {
+          // First, sort by completion status (incomplete habits first)
+          if (a.isCompleted !== b.isCompleted) {
+            return a.isCompleted ? 1 : -1;
+          }
 
-      // Sort habits by priority
-      habitsWithStatus.sort((a, b) => a.priority - b.priority);
+          // If completion status is the same, sort by priority (high to low)
+          return b.priority - a.priority;
+        });
 
       res.json({ habits: habitsWithStatus });
     } catch (error) {
