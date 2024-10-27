@@ -304,6 +304,7 @@ app.delete(
         habitId: deletedHabit._id,
       });
     } catch (error) {
+      console.error("Error deleting habit:", error);
       res.status(400).json({ message: "Error deleting habit", error });
     }
   }
