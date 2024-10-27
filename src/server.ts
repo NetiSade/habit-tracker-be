@@ -279,8 +279,9 @@ app.delete(
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
+      const { habitId } = req.params;
       // Find the habit to be deleted
-      const deletedHabit = await Habit.findById(req.params);
+      const deletedHabit = await Habit.findById(habitId);
       if (!deletedHabit) {
         return res.status(404).json({ message: "Habit not found" });
       }
@@ -291,9 +292,8 @@ app.delete(
       // Update priorities - lower the priority of all habits with a higher priority from the deleted habit
       await Habit.updateMany(
         {
-          priority: { $gt: deletedHabit.priority },
+          priority: { $gt: deletedHabit.priority, isActive: true },
           user: deletedHabit.user,
-          isActive: true,
         },
         { $inc: { priority: -1 } }
       );
