@@ -101,24 +101,22 @@ app.get(
         return res.status(400).json({ message: "Invalid date provided" });
       }
 
-      const habitsWithStatus = habits
-        .map((habit) => ({
-          id: habit._id,
-          name: habit.name,
-          isCompleted: habit.completedDates.some((date) =>
-            compareDates(date.toISOString(), dateQuery)
-          ),
-          priority: habit.priority,
-        }))
-        .sort((a, b) => {
-          // First, sort by completion status (incomplete habits first)
-          if (a.isCompleted !== b.isCompleted) {
-            return a.isCompleted ? 1 : -1;
-          }
+      const habitsWithStatus = habits.map((habit) => ({
+        id: habit._id,
+        name: habit.name,
+        isCompleted: habit.completedDates.some((date) =>
+          compareDates(date.toISOString(), dateQuery)
+        ),
+        priority: habit.priority,
+      }));
 
-          // If completion status is the same, sort by priority (high to low)
-          return b.priority - a.priority;
-        });
+      // sort habits by priority and status (completed at the end)
+      habitsWithStatus.sort((a, b) => {
+        if (a.priority === b.priority) {
+          return a.isCompleted ? 1 : -1;
+        }
+        return a.priority - b.priority;
+      });
 
       res.json({ habits: habitsWithStatus });
     } catch (error) {
@@ -289,11 +287,12 @@ app.delete(
       // Delete the habit
       await deletedHabit.updateOne({ isActive: false, deletedAt: new Date() });
 
-      // Update priorities - lower the priority of all habits with a higher priority from the deleted habit
+      // Update priorities - lower the priority of all active habits with a higher priority from the deleted habit
       await Habit.updateMany(
         {
-          priority: { $gt: deletedHabit.priority, isActive: true },
           user: deletedHabit.user,
+          priority: { $gt: deletedHabit.priority },
+          isActive: true,
         },
         { $inc: { priority: -1 } }
       );
