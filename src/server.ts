@@ -15,8 +15,6 @@ import loginRouter from "./routes/auth/login";
 import refreshTokenRouter from "./routes/auth/refreshToken";
 import verifyTokenRouter from "./routes/auth/verifyToken";
 
-
-
 const app: Express = express();
 
 // Middleware
@@ -283,7 +281,7 @@ app.delete(
     try {
       const { habitId } = req.params;
       // Find the habit to be deleted
-      const deletedHabit = await Habit.findById(habitId);
+      const deletedHabit = await Habit.findOne({ _id: habitId });
       if (!deletedHabit) {
         return res.status(404).json({ message: "Habit not found" });
       }
