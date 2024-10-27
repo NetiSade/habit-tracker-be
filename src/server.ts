@@ -275,7 +275,7 @@ app.post(
 );
 
 app.delete(
-  "/habits/:id",
+  "/habits/:habitId",
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
