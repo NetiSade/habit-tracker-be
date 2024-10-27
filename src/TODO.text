@@ -1,0 +1,3 @@
+TODO:
+1. Fix timestamp bug - pass the client time in all requests, and use it to calculate all the time related stuff.
+2. Add habit log schema for use it for the stats page and better habit tracking. (remove the habit log from the habit schema)
