@@ -91,7 +91,7 @@ app.get(
         return res.status(404).json({ message: "User not found" });
       }
 
-      const habits = await Habit.find({ user: userId }).lean();
+      const habits = await Habit.find({ user: userId, isActive: true }).lean();
 
       const dateQuery = req.query.date as string;
       const clientDate = getClientDate(dateQuery);
@@ -279,15 +279,22 @@ app.delete(
   authMiddleware,
   async (req: Request, res: Response) => {
     try {
-      // Delete
-      const deletedHabit = await Habit.findByIdAndDelete(req.params.id).lean();
+      // Find the habit to be deleted
+      const deletedHabit = await Habit.findById(req.params);
       if (!deletedHabit) {
         return res.status(404).json({ message: "Habit not found" });
       }
 
+      // Delete the habit
+      await deletedHabit.updateOne({ isActive: false, deletedAt: new Date() });
+
       // Update priorities - lower the priority of all habits with a higher priority from the deleted habit
       await Habit.updateMany(
-        { priority: { $gt: deletedHabit.priority } },
+        {
+          priority: { $gt: deletedHabit.priority },
+          user: deletedHabit.user,
+          isActive: true,
+        },
         { $inc: { priority: -1 } }
       );
 
@@ -303,8 +310,3 @@ app.delete(
 );
 
 export default app;
-
-
-
-
-

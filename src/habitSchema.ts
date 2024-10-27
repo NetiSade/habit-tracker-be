@@ -5,6 +5,8 @@ const habitSchema = new mongoose.Schema(
     name: { type: String, required: true },
     priority: { type: Number, required: true },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    isActive: { type: Boolean, default: true },
+    deletedAt: { type: Date },
     completedDates: [{ type: Date }],
   },
   { timestamps: true }
