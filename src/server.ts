@@ -153,9 +153,11 @@ app.post("/habits", authMiddleware, async (req: Request, res: Response) => {
       user: userId,
     });
     if (existingHabit) {
-      return res
-        .status(409)
-        .json({ message: "This habit already exists for this user" });
+      await existingHabit.updateOne({ isActive: true });
+      return res.status(200).json({
+        message: "Habit already exists, reactivated",
+        id: existingHabit._id,
+      });
     }
 
     const habitsCount = await Habit.countDocuments({ user: userId });
