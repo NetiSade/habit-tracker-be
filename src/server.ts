@@ -41,6 +41,7 @@ app.use(limiter);
 // CORS configuration
 const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
+    console.log("Origin:", origin); // Log the incoming origin
     // Allow requests from any origin in allowedOrigins or no origin for RN
     if (config.allowedOrigins.includes(origin as string) || !origin) {
       callback(null, true);
