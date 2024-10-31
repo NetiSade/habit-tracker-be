@@ -16,7 +16,7 @@ const sendVerificationEmail = async (
   email: string,
   verificationToken: string
 ) => {
-  const verificationLink = `${process.env.EMAIL_VERIFICATION_URL}?token=${verificationToken}`;
+  const verificationLink = `${config.emailVerificationUrl}?token=${verificationToken}`;
 
   try {
     const res = await resend.emails.send({
