@@ -18,3 +18,7 @@ export const getClientDateString = (dateString: string) => {
 export const compareDates = (date1: string, date2: string) => {
   return getClientDateString(date1) === getClientDateString(date2);
 };
+
+
+
+
