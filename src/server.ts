@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from "express";
 import mongoose from "mongoose";
-import cors from "cors";
+import cors, { CorsOptions } from "cors";
 
 import { Habit } from "./habitSchema";
 import { User } from "./routes/auth/userSchema";
@@ -30,12 +30,33 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // CORS configuration
-const corsOptions = {
-  origin: process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(",")
-    : [],
-  optionsSuccessStatus: 200,
+// const corsOptions = {
+//   origin: process.env.ALLOWED_ORIGINS
+//     ? process.env.ALLOWED_ORIGINS.split(",")
+//     : [],
+//   optionsSuccessStatus: 200,
+// };
+// app.use(cors(corsOptions));
+
+const allowedOrigins = [
+  "https://habit-tracker-web-one.vercel.app", // Web app origin
+  "null", // Required for React Native requests, as they often have no origin
+];
+
+// CORS configuration
+const corsOptions: CorsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests from any origin in allowedOrigins or no origin for RN
+    if (allowedOrigins.includes(origin as string) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "OPTIONS"],
+  credentials: true,
 };
+
 app.use(cors(corsOptions));
 
 // Error handling middleware
