@@ -43,9 +43,8 @@ app.use(limiter);
 const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
     console.log("Origin:", origin); // Log the incoming origin
-    console.log("Allowed origins:", config.allowedOrigins); // Log the allowed origins
     // Allow requests from any origin in allowedOrigins or no origin for RN
-    if (config.allowedOrigins.includes(origin as string) || !origin) {
+    if (origin === config.webAppOrigin || !origin) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
