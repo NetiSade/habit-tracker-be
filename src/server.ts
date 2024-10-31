@@ -3,14 +3,14 @@ import mongoose from "mongoose";
 import cors from "cors";
 
 import { Habit } from "./habitSchema";
-import { User } from "./userSchema";
-import { authMiddleware } from "./authMiddleware";
+import { User } from "./routes/auth/userSchema";
+import { authMiddleware } from "./routes/auth/authMiddleware";
 import { compareDates, getClientDate } from "./utils";
 import { config } from "./config";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 // Routes
-import signupRouter from "./routes/auth/signup";
+import signupRouter from "./routes/auth/register";
 import loginRouter from "./routes/auth/login";
 import refreshTokenRouter from "./routes/auth/refreshToken";
 import verifyTokenRouter from "./routes/auth/verifyToken";
@@ -310,5 +310,9 @@ app.delete(
     }
   }
 );
+
+// app.listen(3000, "0.0.0.0", () => {
+//   console.log(`Server running on http://0.0.0.0:${3000}`);
+// });
 
 export default app;

@@ -5,7 +5,7 @@ import { config } from "../../config";
 
 const router = express.Router();
 
-router.post("/refresh-token", async (req, res) => {
+router.post("/auth/refresh-token", async (req, res) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {

@@ -2,11 +2,11 @@ import express from "express";
 import jwt from "jsonwebtoken";
 
 import { config } from "../../config";
-import { User } from "../../userSchema";
+import { User } from "./userSchema";
 
 const router = express.Router();
 
-router.get("/verify-token", async (req, res) => {
+router.get("/auth/verify-token", async (req, res) => {
   const authHeader = req.header("Authorization");
 
   if (!authHeader) {

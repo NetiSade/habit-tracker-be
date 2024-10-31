@@ -2,16 +2,16 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
-import { User } from "../../userSchema";
+import { User } from "./userSchema";
 import { config } from "../../config";
 
 const router = express.Router();
 
-router.post("/login", async (req, res) => {
+router.post("/auth/login", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -20,6 +20,12 @@ router.post("/login", async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    if (!user.isVerified) {
+      return res
+        .status(403)
+        .json({ error: "Please verify your email before logging in" });
     }
 
     const accessToken = jwt.sign({ userId: user._id }, config.jwtSecret, {
