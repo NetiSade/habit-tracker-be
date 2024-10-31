@@ -18,6 +18,8 @@ const sendVerificationEmail = async (
 ) => {
   const verificationLink = `${config.emailVerificationUrl}?token=${verificationToken}`;
 
+  console.log("~ file: register.ts:22 ~ verificationLink:", verificationLink);
+
   try {
     const res = await resend.emails.send({
       from: "onboarding@resend.dev", // or your verified domain
@@ -33,6 +35,7 @@ const sendVerificationEmail = async (
 
     return res;
   } catch (error) {
+    console.error("~ file: register.ts:42 ~ error:", error);
     throw new Error("Failed to send verification email");
   }
 };
