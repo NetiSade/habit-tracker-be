@@ -14,6 +14,7 @@ import signupRouter from "./routes/auth/register";
 import loginRouter from "./routes/auth/login";
 import refreshTokenRouter from "./routes/auth/refreshToken";
 import verifyTokenRouter from "./routes/auth/verifyToken";
+import verifyEmailRouter from "./routes/auth/verifyEmail";
 
 const app: Express = express();
 
@@ -96,6 +97,8 @@ app.use("/", signupRouter);
 app.use("/", loginRouter);
 app.use("/", refreshTokenRouter);
 app.use("/", verifyTokenRouter);
+app.use("/", verifyEmailRouter);
+
 // Habit routes
 app.get("/", (req: Request, res: Response) => {
   console.log("GET / route hit");
