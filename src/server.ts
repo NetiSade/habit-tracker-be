@@ -48,11 +48,19 @@ const corsOptions: CorsOptions = {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: ["GET", "POST", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
+
+// Handle OPTIONS preflight requests for all routes
+app.options("*", cors(corsOptions));
+
+app.listen(config.port, () => {
+  console.log("Server is running on port", config.port);
+});
 
 // Error handling middleware
 app.use(
