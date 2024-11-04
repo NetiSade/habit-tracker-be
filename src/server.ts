@@ -30,39 +30,26 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration
-// const corsOptions = {
-//   origin: process.env.ALLOWED_ORIGINS
-//     ? process.env.ALLOWED_ORIGINS.split(",")
-//     : [],
-//   optionsSuccessStatus: 200,
-// };
-// app.use(cors(corsOptions));
+const allowedOrigins =
+  process.env.NODE_ENV === "development"
+    ? ["http://localhost:3000", "http://localhost:5174"]
+    : [config.webAppOrigin];
 
 // CORS configuration
 const corsOptions: CorsOptions = {
-  origin: (origin, callback) => {
-    console.log("Origin:", origin); // Log the incoming origin
-    // Allow requests from any origin in allowedOrigins or no origin for RN
-    if (
-      !origin ||
-      origin === config.webAppOrigin ||
-      origin === "http://localhost"
-    ) {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true,
   allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
-
-// Handle OPTIONS preflight requests for all routes
-app.options("*", cors(corsOptions));
 
 app.listen(config.port, () => {
   console.log("Server is running on port", config.port);
@@ -342,9 +329,5 @@ app.delete(
     }
   }
 );
-
-// app.listen(3000, "0.0.0.0", () => {
-//   console.log(`Server running on http://0.0.0.0:${3000}`);
-// });
 
 export default app;
