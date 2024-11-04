@@ -44,7 +44,11 @@ const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
     console.log("Origin:", origin); // Log the incoming origin
     // Allow requests from any origin in allowedOrigins or no origin for RN
-    if (origin === config.webAppOrigin || !origin) {
+    if (
+      !origin ||
+      origin === config.webAppOrigin ||
+      origin === "http://localhost"
+    ) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
