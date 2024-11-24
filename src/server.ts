@@ -32,15 +32,21 @@ app.use(limiter);
 
 const allowedOrigins =
   process.env.NODE_ENV === "development"
-    ? ["http://localhost:3000", "http://localhost:5174"]
+    ? [
+        "http://localhost:3000",
+        "http://localhost:5174",
+        "http://localhost:5173",
+      ]
     : [config.webAppOrigin];
 
+console.log("~ file: server.ts:35 ~ allowedOrigins:", allowedOrigins);
 // CORS configuration
 const corsOptions: CorsOptions = {
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      console.log("Origin not allowed by CORS:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
