@@ -5,7 +5,7 @@ import cors, { CorsOptions } from "cors";
 import { Habit } from "./habitSchema";
 import { User } from "./routes/auth/userSchema";
 import { authMiddleware } from "./routes/auth/authMiddleware";
-import { compareDates, getClientDate } from "./utils";
+import { getClientDateString } from "./utils";
 import { config } from "./config";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -15,6 +15,7 @@ import loginRouter from "./routes/auth/login";
 import refreshTokenRouter from "./routes/auth/refreshToken";
 import verifyTokenRouter from "./routes/auth/verifyToken";
 import verifyEmailRouter from "./routes/auth/verifyEmail";
+import { ActivityLog } from "./activityLogSchema";
 
 const app: Express = express();
 
@@ -119,22 +120,29 @@ app.get(
       const habits = await Habit.find({ user: userId, isActive: true }).lean();
 
       const dateQuery = req.query.date as string;
-      const clientDate = getClientDate(dateQuery);
+      const clientDate = getClientDateString(dateQuery);
 
       // Validate date
       if (!clientDate) {
         return res.status(400).json({ message: "Invalid date provided" });
       }
 
-      const habitsWithStatus = habits.map((habit) => ({
-        id: habit._id,
-        name: habit.name,
-        isCompleted: habit.completedDates.some((date) =>
-          compareDates(date.toISOString(), dateQuery)
-        ),
-        priority: habit.priority,
-      }));
+      const habitsWithStatus = await Promise.all(
+        habits.map(async (habit) => {
+          const log = await ActivityLog.findOne({
+            user: userId,
+            habit: habit._id,
+            date: clientDate,
+          });
 
+          return {
+            id: habit._id,
+            name: habit.name,
+            isCompleted: log !== null,
+            priority: habit.priority,
+          };
+        })
+      );
       // sort habits by priority and status (completed at the end)
       habitsWithStatus.sort((a, b) => {
         if (a.priority === b.priority) {
@@ -269,19 +277,33 @@ app.post(
       }
 
       const dateQuery = date as string;
-      const clientDate = getClientDate(dateQuery);
+
+      const clientDate = getClientDateString(dateQuery);
 
       // Validate date
       if (!clientDate) {
         return res.status(400).json({ message: "Invalid date provided" });
       }
 
+      const existingLog = await ActivityLog.findOne({
+        user: userId,
+        habit: habitId,
+        date: clientDate,
+      });
+
       if (isDone) {
-        habit.completedDates.push(date);
+        if (!existingLog) {
+          await ActivityLog.create({
+            user: userId,
+            habit: habitId,
+            date: clientDate,
+          });
+        }
+        // Check if an entry already exists for today
       } else {
-        habit.completedDates = habit.completedDates.filter(
-          (date) => !compareDates(date.toISOString(), dateQuery)
-        );
+        if (existingLog) {
+          await ActivityLog.deleteOne({ _id: existingLog._id });
+        }
       }
 
       const updatedHabit = await habit.save();
