@@ -15,6 +15,8 @@ import loginRouter from "./routes/auth/login";
 import refreshTokenRouter from "./routes/auth/refreshToken";
 import verifyTokenRouter from "./routes/auth/verifyToken";
 import verifyEmailRouter from "./routes/auth/verifyEmail";
+import forgotPasswordRouter from "./routes/auth/forgotPassword";
+import resetPasswordRouter from "./routes/auth/resetPassword";
 import { ActivityLog } from "./activityLogSchema";
 import { IActivityLog } from "./types";
 
@@ -97,6 +99,8 @@ app.use("/", loginRouter);
 app.use("/", refreshTokenRouter);
 app.use("/", verifyTokenRouter);
 app.use("/", verifyEmailRouter);
+app.use("/", forgotPasswordRouter);
+app.use("/", resetPasswordRouter);
 
 // Habit routes
 app.get("/", (req: Request, res: Response) => {

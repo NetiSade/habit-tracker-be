@@ -10,6 +10,8 @@ export const config = {
   resendApiKey: process.env.RESEND_API_KEY || "your_resend api_key",
   emailVerificationUrl:
     process.env.EMAIL_VERIFICATION_URL || "http://localhost:3000/verify-email",
+  passwordResetUrl:
+    process.env.PASSWORD_RESET_URL || "http://localhost:3000/reset-password",
   webAppOrigin: process.env.WEB_APP_ORIGIN || "http://localhost:3000",
   port: process.env.PORT || 3000,
   // Add other configuration variables as needed
