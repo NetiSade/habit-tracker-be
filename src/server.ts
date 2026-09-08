@@ -83,13 +83,25 @@ if (!config.mongoUri) {
   process.exit(1);
 }
 
-mongoose
-  .connect(config.mongoUri)
-  .then(() => console.log("Connected successfully to MongoDB Atlas"))
-  .catch((error) => {
-    console.error("Could not connect to MongoDB Atlas", error);
-    process.exit(1);
-  });
+let lastMongoError: string | null = null;
+
+const connectMongo = () => {
+  mongoose
+    .connect(config.mongoUri)
+    .then(() => {
+      lastMongoError = null;
+      console.log("Connected successfully to MongoDB Atlas");
+    })
+    .catch((error) => {
+      lastMongoError =
+        error instanceof Error ? error.message : String(error);
+      console.error("Could not connect to MongoDB Atlas", error);
+      // Keep the process alive (so /health stays reachable) and retry.
+      setTimeout(connectMongo, 30000);
+    });
+};
+
+connectMongo();
 
 // Routes
 
@@ -101,6 +113,15 @@ app.use("/", verifyTokenRouter);
 app.use("/", verifyEmailRouter);
 app.use("/", forgotPasswordRouter);
 app.use("/", resetPasswordRouter);
+
+// Health route - reports Mongo connectivity so outages are debuggable without dashboard access
+app.get("/health", (req: Request, res: Response) => {
+  res.json({
+    status: mongoose.connection.readyState === 1 ? "ok" : "degraded",
+    mongoReadyState: mongoose.connection.readyState, // 0=disconnected 1=connected 2=connecting 3=disconnecting
+    lastMongoError,
+  });
+});
 
 // Habit routes
 app.get("/", (req: Request, res: Response) => {
